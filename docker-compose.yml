@@ -1,0 +1,67 @@
+version: "3.8"
+
+services:
+    app:
+        build:
+            context: ./
+            dockerfile: Dockerfile
+            args:
+                user: laravel
+                uid: 1000
+        image: laravel1
+        container_name: ${APP_NAME}-laravel-app
+        restart: unless-stopped
+        working_dir: /var/www/
+        expose:
+            - "9000"
+        volumes:
+            - ./:/var/www
+        networks:
+            - laravel
+        depends_on:
+            - db
+
+    db:
+        image: mysql:8.0
+        container_name: ${APP_NAME}-laravel-db
+        restart: unless-stopped
+        environment:
+            MYSQL_DATABASE: ${DOCKER_DB_DATABASE}
+            MYSQL_ROOT_PASSWORD: ${DOCKER_DB_ROOT_PASSWORD}
+            MYSQL_USER: ${DOCKER_DB_USERNAME}
+            MYSQL_PASSWORD: ${DOCKER_DB_PASSWORD}
+        ports:
+            - ${DOCKER_DB_PORT}:3306
+        volumes:
+            - ./docker-compose/mysql:/docker-entrypoint-initdb.d
+        networks:
+            - laravel
+
+    nginx:
+        image: nginx:1.17-alpine
+        container_name: ${APP_NAME}-laravel-nginx
+        restart: unless-stopped
+        ports:
+            - ${DOCKER_NGINX_PORT}:80
+        volumes:
+            - ./:/var/www
+            - ./docker-compose/nginx:/etc/nginx/conf.d
+        networks:
+            - laravel
+
+    phpmyadmin:
+        # <--- pastikan ini ada di dalam 'services:'
+        image: phpmyadmin/phpmyadmin
+        container_name: laravel-phpmyadmin
+        restart: unless-stopped
+        environment:
+            PMA_HOST: db
+            MYSQL_ROOT_PASSWORD: root
+        ports:
+            - 8081:80
+        networks:
+            - laravel
+
+networks:
+    laravel:
+        driver: bridge
