@@ -2,9 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 // Route::get('/example', function () {
 // 	return 'This is an example route';
@@ -19,9 +17,11 @@ Route::get('/', function () {
 
 Route::get('/example2/{id}', [App\Http\Controllers\ExampleController::class,'index']);
 
-Route::get('/users',[
-	App\Http\Controllers\UserController::class,'index'
-]);
+// Route::get('/users',[
+// 	App\Http\Controllers\UserController::class,'index'
+// ]);
+
+Route::resource('users', App\Http\Controllers\UserController::class);
 
 Route::get('/posts',[
 	App\Http\Controllers\PostController::class,'index'
@@ -36,6 +36,10 @@ Route::get('/ganjil/{number}', function ($number) {
 	} else {
 		dd("$number adalah bilangan ganjil");
 	}
+});
+
+Route::get('/home', function () {
+    return view('home');
 });
 
 
