@@ -6,26 +6,20 @@
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<link rel="stylesheet" href="{{asset('bootstrap/css/bootstrap.min.css')}}">
 	{{-- <link rel="stylesheet" href="{{asset('style.css')}}"> --}}
-	<title>Beranda - Data</title>
+	<title>Full Data</title>
 </head>
-<body>
-	@if(Session::has('success'))
-    <div id="notif" style="background: lightgreen; color: black; font-weight: bold; padding: 10px; margin-bottom: 10px; border: 2px solid green;">
-        {{ Session::get('success') }}
-    </div>
-
-    <script>
-        setTimeout(() => {
-            document.getElementById('notif').style.display = 'none';
-        }, 3000);
-    </script>
-@endif
-
+<body class="container mt-3">
 
 
 	<h1>Tabel post</h1>
-	<a href="{{ route('posts.create') }}" class="btn btn-primary">tambah post</a>
-	<table style="border-collapse: collapse; width: 100%;" border="1">
+	<a href="{{ route('posts.create') }}" class="btn btn-success mb-3">tambah post</a>
+	{{-- {{ dd(session()->all()) }} --}}
+	@if (session('success'))
+		<div class="alert alert-success">
+			{{ session('success') }}
+		</div>
+	@endif
+	<table class="table table-bordered">
 		<tr>
 			<th>No</th>
 			<th>Judul</th>
@@ -33,6 +27,7 @@
 			<th>Tanggal terbit</th>
 			<th>Gambar</th>
 			<th>Penulis</th>
+			<th>Aksi</th>
 		</tr>
 		@forelse ($posts as $post)
 		<tr>
@@ -48,12 +43,12 @@
 				@endif
 			</td>
 			<td>{{ $post->user ? $post->user->name : 'Penulis tidak ditemukan' }}</td>
-			<td>
-    			<a href="{{ route('posts.edit', $post->id) }}">Edit</a>
+			<td class="text-center">
+    			<a href="{{ route('posts.edit', $post->id) }}" class="btn btn-warning btn-sm ">Edit</a>
     			<form action="{{ route('posts.destroy', $post->id) }}" method="POST" style="display:inline;">
         			@csrf
         			@method('DELETE')
-        			<button type="submit" onclick="return confirm('Yakin hapus?')">Delete</button>
+        			<button type="submit" onclick="return confirm('Yakin hapus?')" class="btn btn-danger btn-sm">Delete</button>
     			</form>
 			</td>
 
@@ -64,9 +59,8 @@
 		</tr>
 		@endforelse
 	</table>
-
-	{{ $posts->links() }}
-
-	{{-- <button class="btn btn-primary">Tambah Post</button> --}}
+	<div>
+		{{ $posts->links() }}
+	</div> 
 </body>
 </html>
