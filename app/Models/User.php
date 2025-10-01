@@ -22,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+		'photo',
     ]; //fungsinya buat nama nama kolom tabel users
 
     /**

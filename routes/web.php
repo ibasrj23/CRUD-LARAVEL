@@ -21,11 +21,10 @@ Route::get('/example2/{id}', [App\Http\Controllers\ExampleController::class,'ind
 // 	App\Http\Controllers\UserController::class,'index'
 // ]);
 
-Route::resource('users', App\Http\Controllers\UserController::class);
-
 Route::get('/posts',[
 	App\Http\Controllers\PostController::class,'index'
 ]);
+Route::resource('users', App\Http\Controllers\UserController::class);//otomatis pake semua route CRUD
 
 Route::resource('posts', App\Http\Controllers\PostController::class);//otomatis pake semua route CRUD
 
@@ -36,10 +35,6 @@ Route::get('/ganjil/{number}', function ($number) {
 	} else {
 		dd("$number adalah bilangan ganjil");
 	}
-});
-
-Route::get('/home', function () {
-    return view('home');
 });
 
 

@@ -22,7 +22,7 @@
             <label for="image">Gambar:</label>
             <input type="file" id="image" name="image">
             @if($post->image)
-                <p>Gambar saat ini: <img src="{{ asset('posts/' . $post->image) }}" width="100"></p>
+                <p>Gambar saat ini: <img src="{{ asset('image/' . $post->image) }}" width="100"></p>
             @endif
         </div>
         <div>
