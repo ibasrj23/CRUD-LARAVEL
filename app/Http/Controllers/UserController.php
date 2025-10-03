@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
-use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -36,32 +35,41 @@ class UserController extends Controller
     {
         // Validasi input
         $validated = $request->validate([
-            'name' => 'required|string|max:255', // pastikan nama diisi
-            'username' => 'required|string|unique:users,username', // username wajib dan unik
-            'email' => 'required|email|unique:users,email', // email wajib dan unik
-            'password' => 'required|string|min:6', // password wajib dan minimal 6 karakter
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // foto opsional, maksimal 2MB
+            'username' => 'required|string|unique:users,username',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'nullable|string|min:6|',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ], [
+            'photo.image' => 'File yang diunggah harus berupa gambar.',
+            'photo.mimes' => 'Gambar yang diunggah harus bertipe jpg, jpeg, atau png.',
+            'photo.max'   => 'Ukuran gambar tidak boleh melebihi 2MB.',
+            'username.required' => 'Username wajib diisi, jangan biarkan kosong.',
+            'name.required' => 'Nama lengkap harus diisi.',
+            'email.required' => 'Email tidak boleh kosong, mohon diisi.',
+            'email.email' => 'Email yang dimasukkan tidak valid.',
+            'email.unique' => 'Email yang ini sudah digunakan oleh orang lain.',
+            'password.min' => 'Password harus terdiri dari minimal 6 karakter.',
+            'username.unique' => 'Username ini sudah terdaftar, coba pilih yang lain.',
         ]);
 
-
-        // Mengupload foto jika ada
+        // Upload foto
         $photoName = null;
         if ($request->hasFile('photo')) {
-            // Menyimpan foto di folder public/photos
-            $photoName = time() . '.' . $request->photo->extension();
+            $photoName = time().'.'.$request->photo->extension();
             $request->photo->move(public_path('photos'), $photoName);
         }
 
         // Menyimpan data user
         User::create([
-            'name' => $validated['name'],
             'username' => $validated['username'],
+            'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => bcrypt($validated['password']), // Password terenkripsi
-            'photo' => $photoName, // Menyimpan nama foto
+            'password' => bcrypt($validated['password']),
+            'photo' => $photoName,
         ]);
 
-        return redirect()->route('users.index')->with('success', 'Data user berhasil ditambahkan!');
+        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan!');
     }
 
     /**
@@ -69,7 +77,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        //
+        return view('user.show', compact('user'));
     }
 
     /**
@@ -89,25 +97,33 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:6|confirmed', // Password opsional
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Foto opsional
+            'password' => 'nullable|string|min:6',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'username' => 'required|string|unique:users,username,' . $user->id,
+        ], [
+            'photo.image' => 'Pastikan file yang diunggah adalah gambar.',
+            'photo.mimes' => 'Format gambar yang diperbolehkan adalah jpg, jpeg, dan png.',
+            'photo.max'   => 'Maksimal ukuran gambar adalah 2MB.',
+            'username.required' => 'Username harus diisi, tidak boleh kosong.',
+            'email.required' => 'Email tidak boleh kosong, pastikan sudah benar.',
+            'email.email' => 'Email yang Anda masukkan tidak valid.',
+            'email.unique' => 'Email sudah terdaftar, coba menggunakan email lain.',
+            'password.min' => 'Password harus terdiri dari minimal 6 karakter.',
+            'username.unique' => 'Username sudah digunakan oleh orang lain, pilihlah yang unik.',
         ]);
 
-        // Jika ada foto baru yang di-upload
+        // Jika ada foto baru
         if ($request->hasFile('photo')) {
-            // Hapus foto lama jika ada
             $oldImage = public_path('photos/' . $user->photo);
-            if (file_exists($oldImage)) {
+            if ($user->photo && file_exists($oldImage)) {
                 unlink($oldImage); // Menghapus foto lama
             }
-
-            // Upload foto baru
             $photoName = time() . '.' . $request->photo->extension();
-            $request->photo->move(public_path('photos'), $photoName); // Menyimpan foto di folder public/photos
+            $request->photo->move(public_path('photos'), $photoName);
             $user->photo = $photoName; // Update foto dengan yang baru
         }
 
-        // Update data user dengan data baru
+        // Update data user
         $user->name = $validated['name'];
         $user->email = $validated['email'];
 
@@ -117,7 +133,7 @@ class UserController extends Controller
 
         $user->save();
 
-        return redirect()->route('users.index')->with('success', 'Data user berhasil diupdate!');
+        return redirect()->route('users.index')->with('success', 'Data user berhasil diperbarui!');
     }
 
     /**
@@ -125,15 +141,14 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        // Hapus foto lama jika ada
+        // Menghapus foto lama jika ada
         $oldImage = public_path('photos/' . $user->photo);
         if ($user->photo && file_exists($oldImage)) {
             unlink($oldImage); // Menghapus foto
         }
 
-        // Hapus data user
         $user->delete();
 
-        return redirect()->route('users.index')->with('success', 'Data user berhasil dihapus');
+        return redirect()->route('users.index')->with('success', 'User berhasil dihapus!');
     }
 }
