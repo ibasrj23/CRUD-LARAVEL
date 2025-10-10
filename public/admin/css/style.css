@@ -1,0 +1,159 @@
+/* General Body Styles */
+body {
+    font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #eef2f5; /* Latar belakang sangat lembut */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    color: #333;
+}
+
+/* Login Wrapper (Untuk centering) */
+.login-wrapper {
+    width: 100%;
+    padding: 20px;
+}
+
+/* Login Card - Kontainer utama form */
+.login-card {
+    background-color: #ffffff;
+    padding: 35px 40px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* Bayangan sedikit lebih kuat */
+    width: 100%;
+    max-width: 380px;
+    margin: auto;
+    text-align: center;
+    border-top: 5px solid #0044AA; /* Garis biru di atas untuk aksen */
+}
+
+/* Header Area (Ikon dan Judul) */
+.header-area {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.header-icon {
+    font-size: 32px;
+    color: #0044AA; /* Biru profesional */
+    margin-bottom: 10px;
+}
+
+.card-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #222;
+    margin: 5px 0 0 0;
+}
+
+.card-subtitle {
+    font-size: 14px;
+    color: #777;
+    margin-top: 5px;
+}
+
+/* Form Group (label + input) */
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #555;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Input Fields (Diperbarui untuk mencakup input file) */
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group input[type="email"],
+.form-group input[type="file"] { /* <--- BARIS INI DITAMBAHKAN */
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 16px;
+    color: #333;
+    transition: all 0.2s;
+    /* Tambahan untuk file input agar tetap rapi */
+    background-color: #f8f8f8;
+}
+
+.form-group input:focus {
+    border-color: #0044AA;
+    box-shadow: 0 0 0 1px #0044AA;
+    outline: none;
+    background-color: #f9f9ff;
+}
+
+/* Login Button */
+.login-button {
+    width: 100%;
+    background-color: #0044AA; /* Biru profesional */
+    color: white;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 10px;
+    transition: background-color 0.2s ease;
+}
+
+.login-button:hover {
+    background-color: #003388;
+}
+
+/* Footer Link (Sign Up) */
+.footer-link {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    font-size: 14px;
+    color: #666;
+}
+
+.footer-link a {
+    color: #0044AA;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.footer-link a:hover {
+    color: #003388;
+    text-decoration: underline;
+}
+
+/* Gaya untuk pesan error umum di atas form */
+/* Gaya untuk pesan error umum di atas form */
+.alert-error {
+    background-color: #ffebeb;
+    color: #cc0000;
+    padding: 10px 15px;
+    border: 1px solid #cc0000;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    text-align: left;
+}
+
+/* Gaya untuk error di bawah field spesifik */
+.field-error {
+    color: #cc0000;
+    font-size: 12px;
+    margin-top: 5px;
+    margin-bottom: 0;
+}

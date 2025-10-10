@@ -22,6 +22,16 @@
     		@enderror
 		</div>
 		<div class="mb-3">
+			<label for="role" class="form-label">Role</label>
+			<select class="form-select" id="role" name="role" required>
+				<option value="1" {{ old('role') == 1 ? 'selected' : '' }}>Admin</option>
+				<option value="2" {{ old('role') == 2 ? 'selected' : '' }}>User</option}>
+					</select>
+					@error('role')
+					<div class="text-danger">{{ $message }}</div>
+					@enderror
+		</div>
+		<div class="mb-3">
 			<label for="email" class="form-label">Email</label>
 			<input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{old('email')}}" required>
 			@error('email')

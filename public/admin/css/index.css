@@ -1,0 +1,105 @@
+/* ----------------------------------------------------------------
+ * CUSTOM STYLE FOR USER INDEX (Super Mantap Style)
+ * ---------------------------------------------------------------- */
+
+/* Floating Card Effect untuk Konten Utama */
+.content-wrapper {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Tombol Aksi Kustom (Tambah User) */
+.btn-primary {
+    background-color: #00796b !important; /* Deep Emerald Teal */
+    border-color: #00796b !important;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 121, 107, 0.3);
+}
+.btn-primary:hover {
+    background-color: #004d40 !important;
+    box-shadow: 0 6px 15px rgba(0, 121, 107, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Styling Table Header */
+.table th {
+    background-color: #1c2331; /* Deep Navy */
+    color: #ffffff;
+    font-weight: 700;
+    vertical-align: middle;
+    border-top: none !important;
+    border-bottom: 2px solid #004d40 !important;
+    padding: 15px 10px;
+    letter-spacing: 0.5px;
+}
+
+/* Styling Table Body */
+.table td {
+    vertical-align: middle;
+    padding: 12px 10px;
+}
+.table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+.table tr:hover {
+    background-color: #e6f6f8;
+}
+
+/* Style Foto Profil */
+.table img {
+    border-radius: 8px;
+    object-fit: cover;
+    max-height: 100px;
+}
+
+/* Styling Pagination */
+.pagination {
+    justify-content: center;
+    margin-top: 20px;
+}
+.pagination .page-item .page-link {
+    color: #00796b;
+    border-radius: 8px;
+    margin: 0 5px;
+    transition: all 0.3s ease;
+}
+.pagination .page-item.active .page-link {
+    background-color: #00796b;
+    border-color: #00796b;
+}
+
+/* Alert Styling */
+.alert {
+    border-radius: 8px;
+    font-weight: 500;
+}
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Tombol Aksi Edit/Hapus */
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #333;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}

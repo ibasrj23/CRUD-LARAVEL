@@ -3,27 +3,52 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
 use App\Models\Post;
+// FIX KRITIS 1: Tambahkan dependency Auth, File, dan Log
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 
 class PostController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource (Index).
      */
-    public function index()
+    public function index(Request $request)
     {
-		$posts = Post::latest()->simplePaginate(5); // kasih tampil cuma 5 halaman saja
-        // $posts = Post::all(); //tampil semua ini
-		$date = date('Y-m-d');
-		// dd($posts);
-		// return view('posts.index', compact('posts', 'date'));
-		// return view('posts.index')->with('posts', $posts);
-		return view('posts.index', [
-			'posts' => $posts,
-			'date' => $date
-		]);
+        // 1. Ambil parameter pencarian dan pengurutan
+        $search = $request->get('search');
+        $sort = $request->get('sort', 'published_at');
 
+        // Query dasar
+        $postsQuery = Post::query();
+
+        // 2. Logic Pencarian
+        if ($search) {
+            $postsQuery->where('title', 'like', '%' . $search . '%')
+                       ->orWhere('content', 'like', '%' . $search . '%');
+        }
+
+        // 3. Logic Pengurutan
+        if ($sort == 'published_at') {
+            $postsQuery->orderBy('published_at', 'desc');
+        } elseif ($sort == 'title') {
+            $postsQuery->orderBy('title', 'asc');
+        } else {
+            $postsQuery->latest('published_at');
+        }
+
+        // Kasih tampil cuma 5 halaman saja (Simple Paginate)
+        $posts = $postsQuery->simplePaginate(5);
+
+        $date = date('Y-m-d');
+
+        return view('posts.index', [
+            'posts' => $posts,
+            'date' => $date,
+            'search' => $search,
+            'sort' => $sort,
+        ]);
     }
 
     /**
@@ -39,33 +64,41 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
-		//kasih validasi
-		$validated = $request->validate([
-			'title' => 'required|max:255',
-			'content' => 'required',
-			'published_at' => 'required|date',
-			'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-		]);
+        //kasih validasi
+        $validated = $request->validate([
+            'title' => 'required|max:255',
+            'content' => 'required',
+            'published_at' => 'required|date',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
 
-		//simpan gambar di public bukan di storage
-		$imageName = null;
-		if ($request->hasFile('image')) {
-			$imageName = time().'_'.$request->image->extension();
-			$request->image->move(public_path('image'), $imageName);
-		}
+        //simpan gambar di public bukan di storage
+        $imageName = null;
+        if ($request->hasFile('image')) {
+            try {
+                // Gunakan time() untuk nama file unik
+                $imageName = time().'_'.$request->image->extension();
+                // Pindahkan ke public/image
+                $request->image->move(public_path('image'), $imageName);
+            } catch (\Throwable $e) {
+                // Log error jika gagal upload (misalnya karena permission)
+                Log::error('Post Store Gagal Upload Image:', ['error' => $e->getMessage()]);
+                return back()->withInput()->with('error', 'Gagal mengupload gambar. Cek izin folder public/image.');
+            }
+        }
 
-		// dd($request->all());
-		$post = Post::create([
-			'title' => $validated['title'],
-			'content' => $validated['content'],
-			'published_at' => $validated['published_at'],
-			'image' => $imageName,
-			'user_id' => 1, //static user_id
-		]);
-		// dd($post);
-		return redirect()->route('posts.index')->with('Sukses', 'berhasil dibuat coy!');
+        // Buat record di database
+        $post = Post::create([
+            'title' => $validated['title'],
+            'content' => $validated['content'],
+            'published_at' => $validated['published_at'],
+            'image' => $imageName,
+            // FIX KRITIS 2: Ganti auth()->id() menjadi Auth::id()
+            'user_id' => Auth::id() ?? 1,
+        ]);
 
-		//seperti INSERT INTO posts (title, content, published_at, image, user_id) VALUES (...)
+        return redirect()->route('posts.index')->with('Sukses', 'berhasil dibuat coy!');
+
     }
 
     /**
@@ -73,7 +106,8 @@ class PostController extends Controller
      */
     public function show(string $id)
     {
-
+        $post = Post::findOrFail($id);
+        return view('posts.show', compact('post'));
     }
 
     /**
@@ -82,7 +116,7 @@ class PostController extends Controller
     public function edit(string $id)
     {
         $post = Post::findOrFail($id);
-		return view('posts.edit', compact('post'));
+        return view('posts.edit', compact('post'));
     }
 
     /**
@@ -91,24 +125,41 @@ class PostController extends Controller
     public function update(Request $request, string $id)
     {
         $validated = $request->validate([
-			'title' => 'required|max:255',
-			'content' => 'required',
-			'published_at' => 'required|date',
-			'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-		]);
+            'title' => 'required|max:255',
+            'content' => 'required',
+            'published_at' => 'required|date',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
 
-		$post = Post::findOrFail($id);
-		if ($request->hasFile('image')) {
-			$imageName = time().'_'.$request->image->extension();
-			$request->image->move(public_path('image'), $imageName);
-			$post->image = $imageName;
-		}
-		$post->title = $validated['title'];
-		$post->content = $validated['content'];
-		$post->published_at = $validated['published_at'];
-		$post->save();
+        $post = Post::findOrFail($id);
+        $imageName = $post->image; // Pertahankan nama gambar lama
 
-		return redirect()->route('posts.index')->with('Sukses', 'sudah update!');
+        if ($request->hasFile('image')) {
+            try {
+                // Hapus foto lama jika ada
+                if ($post->image && File::exists(public_path('image/' . $post->image))) {
+                    File::delete(public_path('image/' . $post->image));
+                }
+
+                // Upload foto baru
+                $imageName = time() . '_' . $request->image->extension();
+                $request->image->move(public_path('image'), $imageName);
+
+            } catch (\Throwable $e) {
+                Log::error("Post Update Gagal (File):", ['post_id' => $post->id, 'error' => $e->getMessage()]);
+                return back()->with('error', 'Update Gagal: Masalah saat mengupload gambar. Cek izin folder.');
+            }
+        }
+
+        // Lakukan update data
+        $post->title = $validated['title'];
+        $post->content = $validated['content'];
+        $post->published_at = $validated['published_at'];
+        $post->image = $imageName; // Pastikan nama gambar di-update
+
+        $post->save();
+
+        return redirect()->route('posts.index')->with('Sukses', 'sudah update!');
     }
 
     /**
@@ -117,7 +168,20 @@ class PostController extends Controller
     public function destroy(string $id)
     {
         $post = Post::findOrFail($id);
-		$post->delete();
-		return redirect()->route('posts.index')->with('Sukses', 'hilang!');
+
+        try {
+            // Hapus foto dari folder (jika ada)
+            if ($post->image && File::exists(public_path('image/' . $post->image))) {
+                File::delete(public_path('image/' . $post->image));
+            }
+
+            $post->delete();
+
+            return redirect()->route('posts.index')->with('Sukses', 'hilang!');
+
+        } catch (\Throwable $e) {
+            Log::error("Post Delete Gagal:", ['post_id' => $id, 'error' => $e->getMessage()]);
+            return redirect()->route('posts.index')->with('error', 'Gagal menghapus post. Cek log server.');
+        }
     }
 }

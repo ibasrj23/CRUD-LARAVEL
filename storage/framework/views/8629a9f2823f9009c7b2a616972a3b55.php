@@ -34,6 +34,23 @@ endif;
 unset($__errorArgs, $__bag); ?>
 		</div>
 		<div class="mb-3">
+			<label for="role" class="form-label">Role</label>
+			<select class="form-select" id="role" name="role" required>
+				<option value="1" <?php echo e(old('role') == 1 ? 'selected' : ''); ?>>Admin</option>
+				<option value="2" <?php echo e(old('role') == 2 ? 'selected' : ''); ?>>User</option}>
+					</select>
+					<?php $__errorArgs = ['role'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+					<div class="text-danger"><?php echo e($message); ?></div>
+					<?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+		</div>
+		<div class="mb-3">
 			<label for="email" class="form-label">Email</label>
 			<input type="email" class="form-control <?php $__errorArgs = ['email'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');

@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash; // PENTING: Memastikan Hash ada
+use Illuminate\Support\Facades\Log; // PENTING: Untuk logging
+use Illuminate\Support\Facades\File; // PENTING: Untuk menghapus file jika menggunakan public_path
+use Exception; // Untuk try-catch
 
 class UserController extends Controller
 {
@@ -38,8 +42,9 @@ class UserController extends Controller
             'username' => 'required|string|unique:users,username',
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'nullable|string|min:6|',
+            'password' => 'required|string|min:6', // Diubah menjadi required
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'role' => 'required|integer|in:1,2',
         ], [
             'photo.image' => 'File yang diunggah harus berupa gambar.',
             'photo.mimes' => 'Gambar yang diunggah harus bertipe jpg, jpeg, atau png.',
@@ -49,6 +54,7 @@ class UserController extends Controller
             'email.required' => 'Email tidak boleh kosong, mohon diisi.',
             'email.email' => 'Email yang dimasukkan tidak valid.',
             'email.unique' => 'Email yang ini sudah digunakan oleh orang lain.',
+            'password.required' => 'Password wajib diisi.', // Pesan tambahan
             'password.min' => 'Password harus terdiri dari minimal 6 karakter.',
             'username.unique' => 'Username ini sudah terdaftar, coba pilih yang lain.',
         ]);
@@ -56,7 +62,7 @@ class UserController extends Controller
         // Upload foto
         $photoName = null;
         if ($request->hasFile('photo')) {
-            $photoName = time().'.'.$request->photo->extension();
+            $photoName = $request->file('photo')->hashName(); // Menggunakan hashName()
             $request->photo->move(public_path('photos'), $photoName);
         }
 
@@ -65,8 +71,9 @@ class UserController extends Controller
             'username' => $validated['username'],
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => bcrypt($validated['password']),
+            'password' => Hash::make($validated['password']), // Menggunakan Hash::make
             'photo' => $photoName,
+            'role' => $validated['role']
         ]);
 
         return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan!');
@@ -93,47 +100,70 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user) // Route model binding
     {
-        // Validasi input
+        // Pengecualian ID user saat ini untuk Email dan Username
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            // Pengecualian untuk Email
             'email' => 'required|email|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:6',
+            'role' => 'required|integer|in:1,2',
+            // Menambahkan 'confirmed' untuk Password Baru (opsional)
+            'password' => 'nullable|string|min:6|confirmed',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            // Pengecualian untuk Username
             'username' => 'required|string|unique:users,username,' . $user->id,
         ], [
+            // ... (Pesan-pesan kustom)
             'photo.image' => 'Pastikan file yang diunggah adalah gambar.',
             'photo.mimes' => 'Format gambar yang diperbolehkan adalah jpg, jpeg, dan png.',
-            'photo.max'   => 'Maksimal ukuran gambar adalah 2MB.',
+            'photo.max' => 'Maksimal ukuran gambar adalah 2MB.',
             'username.required' => 'Username harus diisi, tidak boleh kosong.',
+            'role.required' => 'Role harus diisi, tidak boleh kosong.',
             'email.required' => 'Email tidak boleh kosong, pastikan sudah benar.',
             'email.email' => 'Email yang Anda masukkan tidak valid.',
             'email.unique' => 'Email sudah terdaftar, coba menggunakan email lain.',
             'password.min' => 'Password harus terdiri dari minimal 6 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
             'username.unique' => 'Username sudah digunakan oleh orang lain, pilihlah yang unik.',
         ]);
 
-        // Jika ada foto baru
-        if ($request->hasFile('photo')) {
-            $oldImage = public_path('photos/' . $user->photo);
-            if ($user->photo && file_exists($oldImage)) {
-                unlink($oldImage); // Menghapus foto lama
+        try {
+            // --- LOGIKA UPDATE FOTO ---
+            if ($request->hasFile('photo')) {
+                $oldImagePath = public_path('photos/' . $user->photo);
+
+                // Cek dan hapus foto lama menggunakan File::exists()
+                if ($user->photo && File::exists($oldImagePath)) {
+                    File::delete($oldImagePath);
+                }
+
+                // Simpan foto baru
+                $photoName = $request->file('photo')->hashName();
+                $request->photo->move(public_path('photos'), $photoName);
+                $user->photo = $photoName;
             }
-            $photoName = time() . '.' . $request->photo->extension();
-            $request->photo->move(public_path('photos'), $photoName);
-            $user->photo = $photoName; // Update foto dengan yang baru
+
+            // --- UPDATE FIELD TEKS ---
+            $user->name = $validated['name'];
+            $user->email = $validated['email'];
+            $user->role = $validated['role'];
+            $user->username = $validated['username']; // BARIS INI KRUSIAL
+
+            // Update password hanya jika diisi dan valid
+            if (!empty($validated['password'])) {
+                $user->password = Hash::make($validated['password']);
+            }
+
+            $user->save();
+
+            return redirect()->route('users.index')->with('success', 'Data user berhasil diperbarui!');
+
+        } catch (Exception $e) {
+            // Log the error for debugging
+            Log::error('User Update Failed: ' . $e->getMessage() . ' for user ID: ' . $user->id);
+
+            // Kembalikan error yang lebih spesifik ke user
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui data. Cek log server untuk detail: ' . $e->getMessage());
         }
-
-        // Update data user
-        $user->name = $validated['name'];
-        $user->email = $validated['email'];
-
-        if (!empty($validated['password'])) {
-            $user->password = bcrypt($validated['password']);
-        }
-
-        $user->save();
-
-        return redirect()->route('users.index')->with('success', 'Data user berhasil diperbarui!');
     }
 
     /**
@@ -141,14 +171,18 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        // Menghapus foto lama jika ada
-        $oldImage = public_path('photos/' . $user->photo);
-        if ($user->photo && file_exists($oldImage)) {
-            unlink($oldImage); // Menghapus foto
+        try {
+            // Menghapus foto lama
+            $oldImage = public_path('photos/' . $user->photo);
+            if ($user->photo && File::exists($oldImage)) {
+                File::delete($oldImage);
+            }
+
+            $user->delete();
+
+            return redirect()->route('users.index')->with('success', 'User berhasil dihapus!');
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menghapus user: ' . $e->getMessage());
         }
-
-        $user->delete();
-
-        return redirect()->route('users.index')->with('success', 'User berhasil dihapus!');
     }
 }

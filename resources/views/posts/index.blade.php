@@ -1,66 +1,119 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<link rel="stylesheet" href="{{asset('bootstrap/css/bootstrap.min.css')}}">
-	{{-- <link rel="stylesheet" href="{{asset('style.css')}}"> --}}
-	<title>Full Data</title>
-</head>
-<body class="container mt-3">
+@extends('layouts.app')
+
+@push('styles')
+    <!-- Panggil CSS kustom yang baru untuk tampilan mantap -->
+    <link href="{{ asset('admin/css/styles.css') }}" rel="stylesheet">
+@endpush
+
+@section('title', 'Halaman Post')
+@section('header-title', 'Manajemen Post')
 
 
-	<h1>Tabel post</h1>
-	<a href="{{ route('posts.create') }}" class="btn btn-success mb-3">tambah post</a>
-	{{-- {{ dd(session()->all()) }} --}}
-	@if (session('success'))
-		<div class="alert alert-success">
-			{{ session('success') }}
-		</div>
-	@endif
-	<table class="table table-bordered">
-		<tr>
-			<th>No</th>
-			<th>Judul</th>
-			<th>Isi</th>
-			<th>Tanggal terbit</th>
-			<th>Gambar</th>
-			<th>Penulis</th>
-			<th>Aksi</th>
-		</tr>
-		@forelse ($posts as $post)
-		<tr>
-			<td>{{ $loop->iteration }}</td>
-			<td>{{ $post->title }}</td>
-			<td>{{ $post->content }}</td>
-			<td>{{ $post->published_at }}</td>
-			<td>
-				@if ($post->image)
-					<img src="{{ asset('image/' . $post->image) }}" alt="{{ $post->title }}" width="100">
-				@else
-					Tidak ada gambar
-				@endif
-			</td>
-			<td>{{ $post->user ? $post->user->name : 'Penulis tidak ditemukan' }}</td>
-			<td class="text-center">
-    			<a href="{{ route('posts.edit', $post->id) }}" class="btn btn-warning btn-sm ">Edit</a>
-    			<form action="{{ route('posts.destroy', $post->id) }}" method="POST" style="display:inline;">
-        			@csrf
-        			@method('DELETE')
-        			<button type="submit" onclick="return confirm('Yakin hapus?')" class="btn btn-danger btn-sm">Delete</button>
-    			</form>
-			</td>
+@section('content')
+<div class="content-wrapper">
 
-		</tr>
-		@empty
-		<tr>
-			<td colspan="6">Tidak ada data</td>
-		</tr>
-		@endforelse
-	</table>
-	<div>
-		{{ $posts->links() }}
-	</div> 
-</body>
-</html>
+    <!-- Messages -->
+    @if (session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="alert alert-danger">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    <!-- Tombol Tambah Post (Hanya terlihat oleh Admin/Role 1) -->
+    @if (Auth::user()->role == 1)
+        <a href="{{ route('posts.create') }}" class="btn btn-primary mb-4">
+            <i class="fas fa-plus mr-2"></i> Tambah Post Baru
+        </a>
+    @endif
+
+    <!-- Form Pencarian dan Sorting -->
+    <div class="mb-4 p-3 bg-light rounded-lg shadow-sm d-flex justify-content-between align-items-center">
+        <form action="{{ route('posts.index') }}" method="GET" class="d-flex w-50">
+            <input type="text" name="search" class="form-control me-2" placeholder="Cari Judul atau Konten..." value="{{ request('search') }}">
+            <button type="submit" class="btn btn-secondary"><i class="fas fa-search"></i> Cari</button>
+        </form>
+
+        <form action="{{ route('posts.index') }}" method="GET" class="d-flex">
+            <input type="hidden" name="search" value="{{ request('search') }}">
+            <select name="sort" onchange="this.form.submit()" class="form-select w-auto">
+                <option value="published_at" {{ request('sort') == 'published_at' ? 'selected' : '' }}>Urutkan: Terbaru</option>
+                <option value="title" {{ request('sort') == 'title' ? 'selected' : '' }}>Urutkan: Judul (A-Z)</option>
+            </select>
+        </form>
+    </div>
+
+    <!-- Table Content -->
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">No</th>
+                    <th>Judul</th>
+                    <th style="width: 150px;">Tanggal Publish</th>
+                    <th style="width: 120px;">Gambar</th>
+                    <!-- Kolom Aksi selalu tampil, tetapi isinya berbeda -->
+                    <th style="width: 150px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($posts as $post)
+                    <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ $post->title }}</td>
+                        <td>{{ $post->published_at }}</td>
+                        <td>
+                        @if ($post->image)
+                            <img src="{{ asset('image/' . $post->image) }}" alt="{{ $post->title }}" width="100" height="60" style="object-fit: cover; border-radius: 4px;">
+                        @else
+                            Tidak ada gambar
+                        @endif
+                        </td>
+                        <td class="d-flex justify-content-start align-items-center">
+
+                            <!-- 1. Tombol Show (Selalu terlihat untuk user yang login) -->
+                            <a href="{{ route('posts.show', $post->id) }}" class="btn btn-info btn-sm me-1" title="Lihat Detail">
+                                <i class="fas fa-eye"></i>
+                            </a>
+
+                            <!-- 2. Tombol Edit & Hapus (Hanya terlihat oleh Admin/Role 1) -->
+                            @if (Auth::user()->role == 1)
+                                <!-- Tombol Edit -->
+                                <a href="{{ route('posts.edit', $post->id) }}" class="btn btn-warning btn-sm me-1" title="Edit">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+
+                                <!-- Tombol Hapus -->
+                                <form action="{{ route('posts.destroy', $post->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus post ini?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Hapus">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" class="text-center">Tidak ada post yang ditemukan.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Links -->
+    <div class="d-flex justify-content-center">
+        {{ $posts->links() }}
+    </div>
+</div>
+@endsection
+
+@push('scripts')
+
+@endpush

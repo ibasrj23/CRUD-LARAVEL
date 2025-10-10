@@ -1,1 +1,0 @@
-<?php /**PATH C:\Users\ASUSTeK\latihan-laravel\resources\views\components\styles.blade.php ENDPATH**/ ?>

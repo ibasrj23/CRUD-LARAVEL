@@ -1,1 +1,0 @@
-<h1>ini adalah header</h1><?php /**PATH C:\Users\ASUSTeK\latihan-laravel\resources\views\components\header.blade.php ENDPATH**/ ?>
