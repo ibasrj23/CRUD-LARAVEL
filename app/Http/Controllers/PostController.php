@@ -18,23 +18,25 @@ class PostController extends Controller
     {
         // 1. Ambil parameter pencarian dan pengurutan
         $search = $request->get('search');
+        // Pastikan default sorting adalah 'published_at'
         $sort = $request->get('sort', 'published_at');
 
         // Query dasar
         $postsQuery = Post::query();
 
-        // 2. Logic Pencarian
-        if ($search) {
-            $postsQuery->where('title', 'like', '%' . $search . '%')
-                       ->orWhere('content', 'like', '%' . $search . '%');
-        }
+        // 2. Logic Pencarian (Menggunakan when() - Lebih Clean untuk Filter Opsional)
+        $postsQuery->when($search, function ($query, $search) {
+            return $query->where('title', 'like', '%' . $search . '%')
+                         ->orWhere('content', 'like', '%' . $search . '%');
+        });
 
-        // 3. Logic Pengurutan
+        // 3. Logic Pengurutan (Menggunakan if/elseif/else - Lebih Aman & Efisien untuk Logika Eksklusif)
         if ($sort == 'published_at') {
             $postsQuery->orderBy('published_at', 'desc');
         } elseif ($sort == 'title') {
             $postsQuery->orderBy('title', 'asc');
         } else {
+            // Logika Fallback: Jika parameter sort tidak valid, gunakan latest
             $postsQuery->latest('published_at');
         }
 
@@ -42,6 +44,10 @@ class PostController extends Controller
         $posts = $postsQuery->simplePaginate(5);
 
         $date = date('Y-m-d');
+
+        // PENTING: Error "Attempt to read property role on null" terjadi di VIEW (posts/index.blade.php).
+        // Pastikan di view, setiap pengecekan Auth::user()->role selalu diawali dengan Auth::check() atau Auth::user() &&
+        // Contoh: @if (Auth::check() && Auth::user()->role == 1)
 
         return view('posts.index', [
             'posts' => $posts,

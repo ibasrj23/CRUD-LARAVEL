@@ -34,18 +34,19 @@
                             </a>
                         </li>
 
-                        @if (Auth::user() && Auth::user()->role == 1)
-                        <!-- Data User -->
-                        <li class="nav-item">
-                            <a class="nav-link {{ Route::is('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
-                                <i class="fas fa-users"></i> Data User
-                            </a>
-                        </li>
 
                         <!-- Data Post -->
                         <li class="nav-item">
                             <a class="nav-link {{ Route::is('posts.*') ? 'active' : '' }}" href="{{ route('posts.index') }}">
                                 <i class="fas fa-pen-fancy"></i> Data Post
+                            </a>
+                        </li>
+
+                        @if (Auth::user() && Auth::user()->role == 1)
+                        <!-- Data User -->
+                        <li class="nav-item">
+                            <a class="nav-link {{ Route::is('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
+                                <i class="fas fa-users"></i> Data User
                             </a>
                         </li>
                         @endif

@@ -1,22 +1,24 @@
-<?php $__env->startSection('title', 'Detail Post: ' . $post->title); ?>
+@extends('layouts.app')
 
-<?php $__env->startSection('header-title', 'Detail Post'); ?>
+@section('title', 'Detail Post: ' . $post->title)
 
-<?php $__env->startSection('content'); ?>
+@section('header-title', 'Detail Post')
+
+@section('content')
 
 <div class="card shadow-lg border-0">
     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h4 class="mb-0 text-truncate"><?php echo e($post->title); ?></h4>
+        <h4 class="mb-0 text-truncate">{{ $post->title }}</h4>
 
         <!-- Tombol Aksi Admin -->
         <div class="d-flex flex-shrink-0">
             <!-- Tombol Edit -->
-            <a href="<?php echo e(route('posts.edit', $post->id)); ?>" class="btn btn-warning btn-sm me-2 text-white shadow-sm">
+            <a href="{{ route('posts.edit', $post->id) }}" class="btn btn-warning btn-sm me-2 text-white shadow-sm">
                 <i class="fas fa-edit"></i> Edit
             </a>
 
             <!-- Tombol Delete -->
-            <button type="button" class="btn btn-danger btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#deleteModal<?php echo e($post->id); ?>">
+            <button type="button" class="btn btn-danger btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $post->id }}">
                 <i class="fas fa-trash-alt"></i> Hapus
             </button>
         </div>
@@ -27,12 +29,12 @@
         <!-- Informasi Meta (Kolom Kiri-Kanan yang Rapi) -->
         <div class="row mb-4 border-bottom pb-3 text-muted small">
             <div class="col-md-4">
-                <p class="mb-1"><strong><i class="fas fa-user-circle"></i> Penulis:</strong> <?php echo e($post->user->name ?? 'Admin Sistem'); ?></p>
-                <p class="mb-0"><strong><i class="fas fa-fingerprint"></i> ID Post:</strong> <?php echo e($post->id); ?></p>
+                <p class="mb-1"><strong><i class="fas fa-user-circle"></i> Penulis:</strong> {{ $post->user->name ?? 'Admin Sistem' }}</p>
+                <p class="mb-0"><strong><i class="fas fa-fingerprint"></i> ID Post:</strong> {{ $post->id }}</p>
             </div>
             <div class="col-md-4">
-                <p class="mb-1"><strong><i class="fas fa-calendar-alt"></i> Dibuat:</strong> <?php echo e(\Carbon\Carbon::parse($post->created_at)->translatedFormat('d F Y H:i')); ?></p>
-                <p class="mb-0"><strong><i class="fas fa-share-square"></i> Dipublikasi:</strong> <?php echo e(\Carbon\Carbon::parse($post->published_at)->translatedFormat('d F Y')); ?></p>
+                <p class="mb-1"><strong><i class="fas fa-calendar-alt"></i> Dibuat:</strong> {{ \Carbon\Carbon::parse($post->created_at)->translatedFormat('d F Y H:i') }}</p>
+                <p class="mb-0"><strong><i class="fas fa-share-square"></i> Dipublikasi:</strong> {{ \Carbon\Carbon::parse($post->published_at)->translatedFormat('d F Y') }}</p>
             </div>
             <div class="col-md-4">
                 <span class="badge bg-success shadow-sm p-2">Status: Aktif</span>
@@ -40,35 +42,34 @@
         </div>
 
         <!-- Gambar Utama (Diperkecil dan Fokus di Tengah) -->
-        <?php if($post->image): ?>
+        @if($post->image)
             <div class="mb-4 d-flex justify-content-center">
                 <div class="overflow-hidden border p-2 rounded" style="max-width: 600px;">
-                    <img src="<?php echo e(asset('image/' . $post->image)); ?>" alt="<?php echo e($post->title); ?>" class="img-fluid rounded" style="max-height: 350px; object-fit: cover;">
+                    <img src="{{ asset('image/' . $post->image) }}" alt="{{ $post->title }}" class="img-fluid rounded" style="max-height: 350px; object-fit: cover;">
                 </div>
             </div>
-        <?php else: ?>
+        @else
             <div class="alert alert-info text-center small"><i class="fas fa-info-circle"></i> Tidak ada gambar unggulan.</div>
-        <?php endif; ?>
+        @endif
 
         <!-- Konten Post -->
         <h6 class="mt-4 mb-3 text-secondary border-bottom pb-2"><i class="fas fa-newspaper"></i> Konten Post:</h6>
         <div class="border p-4 rounded bg-white shadow-sm">
-            <?php echo $post->content; ?>
-
+            {!! $post->content !!}
         </div>
 
-    </div> 
+    </div> {{-- end card-body --}}
 
     <div class="card-footer bg-light border-top text-end">
-        <a href="<?php echo e(route('posts.index')); ?>" class="btn btn-secondary shadow-sm">
+        <a href="{{ route('posts.index') }}" class="btn btn-secondary shadow-sm">
             <i class="fas fa-arrow-left"></i> Kembali ke Daftar
         </a>
     </div>
 
-</div> 
+</div> {{-- end card --}}
 
 <!-- Modal Konfirmasi Hapus -->
-<div class="modal fade" id="deleteModal<?php echo e($post->id); ?>" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+<div class="modal fade" id="deleteModal{{ $post->id }}" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
@@ -77,13 +78,13 @@
             </div>
             <div class="modal-body">
                 <p class="text-danger"><i class="fas fa-exclamation-triangle"></i> PERINGATAN! Aksi ini tidak bisa dibatalkan.</p>
-                Apakah Anda yakin ingin menghapus post berjudul <?php echo e($post->tittle); ?> ?
+                Apakah Anda yakin ingin menghapus post berjudul {{$post->tittle}} ?
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <form action="<?php echo e(route('posts.destroy', $post->id)); ?>" method="POST" class="d-inline">
-                    <?php echo csrf_field(); ?>
-                    <?php echo method_field('DELETE'); ?>
+                <form action="{{ route('posts.destroy', $post->id) }}" method="POST" class="d-inline">
+                    @csrf
+                    @method('DELETE')
                     <button type="submit" class="btn btn-danger shadow-sm">Hapus Permanen</button>
                 </form>
             </div>
@@ -91,6 +92,4 @@
     </div>
 </div>
 
-<?php $__env->stopSection(); ?>
-
-<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\ASUSTeK\latihan-laravel\resources\views/posts/show.blade.php ENDPATH**/ ?>
+@endsection

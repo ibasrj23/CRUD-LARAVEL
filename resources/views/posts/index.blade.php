@@ -25,7 +25,8 @@
     @endif
 
     <!-- Tombol Tambah Post (Hanya terlihat oleh Admin/Role 1) -->
-    @if (Auth::user()->role == 1)
+    {{-- FIX 1: Periksa Auth::check() dulu sebelum akses role --}}
+    @if (Auth::check() && Auth::user()->role == 1)
         <a href="{{ route('posts.create') }}" class="btn btn-primary mb-4">
             <i class="fas fa-plus mr-2"></i> Tambah Post Baru
         </a>
@@ -63,7 +64,8 @@
             <tbody>
                 @forelse ($posts as $post)
                     <tr>
-                        <td>{{ $loop->iteration }}</td>
+                        {{-- Perhitungan iterasi harus disesuaikan dengan pagination --}}
+                        <td>{{ $loop->iteration + ($posts->currentPage() - 1) * $posts->perPage() }}</td>
                         <td>{{ $post->title }}</td>
                         <td>{{ $post->published_at }}</td>
                         <td>
@@ -75,13 +77,15 @@
                         </td>
                         <td class="d-flex justify-content-start align-items-center">
 
+                            {{-- Asumsi bahwa route posts.show bisa diakses semua user login --}}
                             <!-- 1. Tombol Show (Selalu terlihat untuk user yang login) -->
                             <a href="{{ route('posts.show', $post->id) }}" class="btn btn-info btn-sm me-1" title="Lihat Detail">
                                 <i class="fas fa-eye"></i>
                             </a>
 
+                            {{-- FIX 2: Tambahkan pemeriksaan Auth::check() sebelum akses role --}}
                             <!-- 2. Tombol Edit & Hapus (Hanya terlihat oleh Admin/Role 1) -->
-                            @if (Auth::user()->role == 1)
+                            @if (Auth::check() && Auth::user()->role == 1)
                                 <!-- Tombol Edit -->
                                 <a href="{{ route('posts.edit', $post->id) }}" class="btn btn-warning btn-sm me-1" title="Edit">
                                     <i class="fas fa-pen"></i>
@@ -109,7 +113,8 @@
 
     <!-- Pagination Links -->
     <div class="d-flex justify-content-center">
-        {{ $posts->links() }}
+        {{-- FIX 3: Pastikan links memegang parameter search/sort --}}
+        {{ $posts->appends(['search' => request('search'), 'sort' => request('sort')])->links() }}
     </div>
 </div>
 @endsection

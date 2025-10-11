@@ -25,7 +25,8 @@
     <?php endif; ?>
 
     <!-- Tombol Tambah Post (Hanya terlihat oleh Admin/Role 1) -->
-    <?php if(Auth::user()->role == 1): ?>
+    
+    <?php if(Auth::check() && Auth::user()->role == 1): ?>
         <a href="<?php echo e(route('posts.create')); ?>" class="btn btn-primary mb-4">
             <i class="fas fa-plus mr-2"></i> Tambah Post Baru
         </a>
@@ -63,7 +64,8 @@
             <tbody>
                 <?php $__empty_1 = true; $__currentLoopData = $posts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $post): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                     <tr>
-                        <td><?php echo e($loop->iteration); ?></td>
+                        
+                        <td><?php echo e($loop->iteration + ($posts->currentPage() - 1) * $posts->perPage()); ?></td>
                         <td><?php echo e($post->title); ?></td>
                         <td><?php echo e($post->published_at); ?></td>
                         <td>
@@ -75,13 +77,15 @@
                         </td>
                         <td class="d-flex justify-content-start align-items-center">
 
+                            
                             <!-- 1. Tombol Show (Selalu terlihat untuk user yang login) -->
                             <a href="<?php echo e(route('posts.show', $post->id)); ?>" class="btn btn-info btn-sm me-1" title="Lihat Detail">
                                 <i class="fas fa-eye"></i>
                             </a>
 
+                            
                             <!-- 2. Tombol Edit & Hapus (Hanya terlihat oleh Admin/Role 1) -->
-                            <?php if(Auth::user()->role == 1): ?>
+                            <?php if(Auth::check() && Auth::user()->role == 1): ?>
                                 <!-- Tombol Edit -->
                                 <a href="<?php echo e(route('posts.edit', $post->id)); ?>" class="btn btn-warning btn-sm me-1" title="Edit">
                                     <i class="fas fa-pen"></i>
@@ -109,7 +113,8 @@
 
     <!-- Pagination Links -->
     <div class="d-flex justify-content-center">
-        <?php echo e($posts->links()); ?>
+        
+        <?php echo e($posts->appends(['search' => request('search'), 'sort' => request('sort')])->links()); ?>
 
     </div>
 </div>
@@ -118,4 +123,5 @@
 <?php $__env->startPush('scripts'); ?>
 
 <?php $__env->stopPush(); ?>
+
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\ASUSTeK\latihan-laravel\resources\views/posts/index.blade.php ENDPATH**/ ?>

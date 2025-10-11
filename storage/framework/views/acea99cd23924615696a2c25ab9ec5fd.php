@@ -34,18 +34,19 @@
                             </a>
                         </li>
 
-                        <?php if(Auth::user() && Auth::user()->role == 1): ?>
-                        <!-- Data User -->
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo e(Route::is('users.*') ? 'active' : ''); ?>" href="<?php echo e(route('users.index')); ?>">
-                                <i class="fas fa-users"></i> Data User
-                            </a>
-                        </li>
 
                         <!-- Data Post -->
                         <li class="nav-item">
                             <a class="nav-link <?php echo e(Route::is('posts.*') ? 'active' : ''); ?>" href="<?php echo e(route('posts.index')); ?>">
                                 <i class="fas fa-pen-fancy"></i> Data Post
+                            </a>
+                        </li>
+
+                        <?php if(Auth::user() && Auth::user()->role == 1): ?>
+                        <!-- Data User -->
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo e(Route::is('users.*') ? 'active' : ''); ?>" href="<?php echo e(route('users.index')); ?>">
+                                <i class="fas fa-users"></i> Data User
                             </a>
                         </li>
                         <?php endif; ?>
