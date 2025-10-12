@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Auth;
 
 // Import Controllers (Pastikan semua Controller ada di sini)
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\PostController;
+use App\Http\Controllers\PostController; // <--- Controller CRUD (Kelola Post)
 use App\Http\Controllers\PublicPostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostnewController;
@@ -25,7 +25,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 // Daftar Post Publik (Sudah benar)
 Route::get('/public/posts', [PublicPostController::class, 'index'])->name('posts.public.index');
 
-// Detail Post Publik (Menggunakan {id} untuk menghindari Model Binding)
+// Detail Post Publik
 Route::get('/public/posts/{id}', [PublicPostController::class, 'show'])->name('posts.public.show');
 
 // Route Ganjil Genap (Testing lama)
@@ -42,6 +42,7 @@ Route::get('/ganjil/{number}', function ($number) {
 |--------------------------------------------------------------------------
 | START: ROUTE AUTHENTICATED (Membutuhkan Login - Middleware 'auth')
 |--------------------------------------------------------------------------
+| Semua yang di dalam grup ini bisa diakses oleh Admin DAN User Biasa.
 */
 
 Route::group([
@@ -54,12 +55,17 @@ Route::group([
     Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile/delete', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // FIX UTAMA: KELOLA POST (ROUTE CRUD)
+    // Route ini dikeluarkan dari middleware 'Admin'
+    // sehingga dapat diakses oleh Admin DAN User Biasa.
+    Route::resource('posts', PostController::class);
+
     // ROUTE ADMIN (Hanya Role 1)
     Route::group([
         'middleware' => ['Admin'],
     ], function () {
+        // Data User (Hanya Admin)
         Route::resource('users', UserController::class);
-        Route::resource('posts', PostController::class); // Route Admin CRUD
     });
 });
 

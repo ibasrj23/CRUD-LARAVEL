@@ -34,15 +34,13 @@
                             </a>
                         </li>
 
-                        {{-- FIX UTAMA: DAFTAR POST (Hanya terlihat jika BUKAN Admin atau JIKA belum Login) --}}
-                        {{-- Logika: Tampilkan jika TIDAK Auth, ATAU jika Auth tapi role BUKAN 1 (Bukan Admin) --}}
-                        @if (!Auth::check() || (Auth::check() && Auth::user()->role != 1))
-                            <li class="nav-item">
-                                <a class="nav-link {{ Route::is('posts.public.index') || Route::is('posts.public.show') ? 'active' : '' }}" href="{{ route('posts.public.index') }}">
-                                    <i class="fas fa-list-alt me-2"></i> Daftar Post
-                                </a>
-                            </li>
-                        @endif
+                        {{-- 2. DAFTAR POST (Terlihat oleh SEMUA ORANG: Guest, User, Admin) --}}
+                        {{-- Logika ini dipertahankan karena semua orang, termasuk Guest, harus bisa melihat daftar post. --}}
+                        <li class="nav-item">
+                            <a class="nav-link {{ Route::is('posts.public.index') || Route::is('posts.public.show') ? 'active' : '' }}" href="{{ route('posts.public.index') }}">
+                                <i class="fas fa-list-alt me-2"></i> Daftar Post
+                            </a>
+                        </li>
 
                         {{-- ============================================================= --}}
                         {{-- START: MENU HANYA JIKA SUDAH LOGIN (Auth) --}}
@@ -57,22 +55,23 @@
                                 </a>
                             </li>
 
-                            {{-- 4. MENU ADMIN (Hanya Role 1) --}}
+                            {{-- FIX UTAMA: DATA POST (Dapat diakses oleh Admin & User Biasa) --}}
+                            {{-- Menu ini digunakan untuk CRUD. Admin akan mengelola semua post, User mengelola post mereka. --}}
+                            {{-- Nama menu diubah agar lebih umum, tidak lagi (Admin) --}}
+                            <li class="nav-item">
+                                {{-- Kita asumsikan route 'posts.index' sekarang menangani post untuk user biasa juga --}}
+                                <a class="nav-link {{ Route::is('posts.index') ? 'active' : '' }}" href="{{ route('posts.index') }}">
+                                    <i class="fas fa-pen me-2"></i> Kelola Post
+                                </a>
+                            </li>
+
+                            {{-- 4. MENU KHUSUS ADMIN (Hanya Role 1) --}}
                             @if (Auth::user()->role == 1)
-
-                                <li class="nav-item">
-                                    <a class="nav-link {{ Route::is('posts.index') ? 'active' : '' }}" href="{{ route('posts.index') }}">
-                                        <i class="fas fa-pen me-2"></i> Data Post 
-                                    </a>
-                                </li>
-
                                 <li class="nav-item">
                                     <a class="nav-link {{ Route::is('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
                                         <i class="fas fa-users me-2"></i> Data User
                                     </a>
-                                </a>
                                 </li>
-
                             @endif
 
                         @endauth

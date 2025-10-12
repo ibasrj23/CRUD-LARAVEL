@@ -11,15 +11,33 @@ use Illuminate\Support\Facades\Log;
 class PostController extends Controller
 {
     /**
+     * Konstruktor: Middleware 'auth' diterapkan untuk semua metode di Controller ini.
+     * FIX: Dihapus karena middleware 'auth' sudah diimplementasikan di routes/web.php.
+     */
+    // public function __construct()
+    // {
+    //     // Memastikan hanya user yang login yang bisa mengakses CRUD
+    //     $this->middleware('auth');
+    // }
+
+    /**
      * Display a listing of the resource (Index)
-     * - Bisa dilihat semua (guest, user, admin)
+     * Logika Kepemilikan: Admin melihat semua, User biasa melihat milik sendiri.
      */
     public function index(Request $request)
     {
+        $user = Auth::user();
         $search = $request->get('search');
         $sort = $request->get('sort', 'published_at');
 
         $postsQuery = Post::query()->with('user');
+
+        // *** START: LOGIKA KEPEMILIKAN UNTUK INDEX ***
+        if ($user->role !== 1) {
+            // Jika bukan Admin, hanya tampilkan post yang dibuat oleh user ini
+            $postsQuery->where('user_id', $user->id);
+        }
+        // *** END: LOGIKA KEPEMILIKAN UNTUK INDEX ***
 
         // Pencarian
         $postsQuery->when($search, function ($query, $search) {
@@ -44,29 +62,21 @@ class PostController extends Controller
 
     /**
      * Show the form for creating a new resource.
-     * - Hanya admin yang bisa membuat post
+     * FIX: Dulu hanya Admin, sekarang semua yang sudah login diizinkan.
      */
     public function create()
     {
-        if (!Auth::check() || Auth::user()->role !== 1) {
-            return redirect()->route('posts.index')
-                ->with('error', 'Anda tidak memiliki izin untuk membuat post.');
-        }
-
+        // Route sudah dilindungi oleh middleware 'auth' di routes/web.php
         return view('posts.create');
     }
 
     /**
      * Store a newly created resource in storage.
-     * - Hanya admin yang bisa menambah post
+     * FIX: Dulu hanya Admin, sekarang semua yang sudah login diizinkan.
      */
     public function store(Request $request)
     {
-        if (!Auth::check() || Auth::user()->role !== 1) {
-            return redirect()->route('posts.index')
-                ->with('error', 'Anda tidak memiliki izin untuk menambah post.');
-        }
-
+        // Cek Auth sudah dilakukan oleh middleware, tidak perlu pengecekan role di sini.
         $validated = $request->validate([
             'title'        => 'required|max:255',
             'content'      => 'required',
@@ -95,7 +105,7 @@ class PostController extends Controller
             'published_at' => $validated['published_at'],
             'image'        => $imageName,
             'is_active'    => $validated['is_active'],
-            'user_id'      => Auth::id(),
+            'user_id'      => Auth::id(), // ID user yang sedang login
         ]);
 
         return redirect()->route('posts.index')->with('success', 'Post berhasil dibuat!');
@@ -103,7 +113,7 @@ class PostController extends Controller
 
     /**
      * Display the specified resource.
-     * - Semua bisa melihat detail post
+     * Semua yang sudah login (user, admin) bisa melihat detail post.
      */
     public function show(string $id)
     {
@@ -113,29 +123,37 @@ class PostController extends Controller
 
     /**
      * Show the form for editing the specified resource.
-     * - Hanya admin yang bisa mengedit
+     * Logika Otorisasi: Hanya pemilik post atau Admin yang boleh mengedit.
      */
     public function edit(string $id)
     {
-        if (!Auth::check() || Auth::user()->role !== 1) {
-            return redirect()->route('posts.index')
-                ->with('error', 'Anda tidak memiliki izin untuk mengedit post.');
-        }
-
         $post = Post::findOrFail($id);
+
+        // *** START: LOGIKA OTORISASI KEPEMILIKAN ***
+        if (Auth::user()->role !== 1 && Auth::id() !== $post->user_id) {
+            // Jika bukan Admin DAN bukan pemilik post
+            return redirect()->route('posts.index')
+                ->with('error', 'Anda tidak memiliki izin untuk mengedit post milik orang lain.');
+        }
+        // *** END: LOGIKA OTORISASI KEPEMILIKAN ***
+
         return view('posts.edit', compact('post'));
     }
 
     /**
      * Update the specified resource in storage.
-     * - Hanya admin yang bisa update post
+     * Logika Otorisasi: Hanya pemilik post atau Admin yang boleh update.
      */
     public function update(Request $request, string $id)
     {
-        if (!Auth::check() || Auth::user()->role !== 1) {
+        $post = Post::findOrFail($id);
+
+        // *** START: LOGIKA OTORISASI KEPEMILIKAN ***
+        if (Auth::user()->role !== 1 && Auth::id() !== $post->user_id) {
             return redirect()->route('posts.index')
-                ->with('error', 'Anda tidak memiliki izin untuk memperbarui post.');
+                ->with('error', 'Anda tidak memiliki izin untuk memperbarui post milik orang lain.');
         }
+        // *** END: LOGIKA OTORISASI KEPEMILIKAN ***
 
         $validated = $request->validate([
             'title'        => 'required|max:255',
@@ -145,7 +163,6 @@ class PostController extends Controller
             'is_active'    => 'required|boolean',
         ]);
 
-        $post = Post::findOrFail($id);
         $imageName = $post->image;
 
         if ($request->hasFile('image')) {
@@ -178,16 +195,18 @@ class PostController extends Controller
 
     /**
      * Remove the specified resource from storage.
-     * - Hanya admin yang bisa menghapus
+     * Logika Otorisasi: Hanya pemilik post atau Admin yang boleh menghapus.
      */
     public function destroy(string $id)
     {
-        if (!Auth::check() || Auth::user()->role !== 1) {
-            return redirect()->route('posts.index')
-                ->with('error', 'Anda tidak memiliki izin untuk menghapus post.');
-        }
-
         $post = Post::findOrFail($id);
+
+        // *** START: LOGIKA OTORISASI KEPEMILIKAN ***
+        if (Auth::user()->role !== 1 && Auth::id() !== $post->user_id) {
+            return redirect()->route('posts.index')
+                ->with('error', 'Anda tidak memiliki izin untuk menghapus post milik orang lain.');
+        }
+        // *** END: LOGIKA OTORISASI KEPEMILIKAN ***
 
         try {
             if ($post->image && File::exists(public_path('image/' . $post->image))) {

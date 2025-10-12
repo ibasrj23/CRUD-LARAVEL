@@ -36,13 +36,11 @@
 
                         
                         
-                        <?php if(!Auth::check() || (Auth::check() && Auth::user()->role != 1)): ?>
-                            <li class="nav-item">
-                                <a class="nav-link <?php echo e(Route::is('posts.public.index') || Route::is('posts.public.show') ? 'active' : ''); ?>" href="<?php echo e(route('posts.public.index')); ?>">
-                                    <i class="fas fa-list-alt me-2"></i> Daftar Post
-                                </a>
-                            </li>
-                        <?php endif; ?>
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo e(Route::is('posts.public.index') || Route::is('posts.public.show') ? 'active' : ''); ?>" href="<?php echo e(route('posts.public.index')); ?>">
+                                <i class="fas fa-list-alt me-2"></i> Daftar Post
+                            </a>
+                        </li>
 
                         
                         
@@ -58,21 +56,22 @@
                             </li>
 
                             
+                            
+                            
+                            <li class="nav-item">
+                                
+                                <a class="nav-link <?php echo e(Route::is('posts.index') ? 'active' : ''); ?>" href="<?php echo e(route('posts.index')); ?>">
+                                    <i class="fas fa-pen me-2"></i> Kelola Post
+                                </a>
+                            </li>
+
+                            
                             <?php if(Auth::user()->role == 1): ?>
-
-                                <li class="nav-item">
-                                    <a class="nav-link <?php echo e(Route::is('posts.index') ? 'active' : ''); ?>" href="<?php echo e(route('posts.index')); ?>">
-                                        <i class="fas fa-pen me-2"></i> Data Post (Admin)
-                                    </a>
-                                </li>
-
                                 <li class="nav-item">
                                     <a class="nav-link <?php echo e(Route::is('users.*') ? 'active' : ''); ?>" href="<?php echo e(route('users.index')); ?>">
                                         <i class="fas fa-users me-2"></i> Data User
                                     </a>
-                                </a>
                                 </li>
-
                             <?php endif; ?>
 
                         <?php endif; ?>
