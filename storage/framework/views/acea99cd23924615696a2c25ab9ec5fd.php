@@ -21,6 +21,7 @@
 </head>
 
 <body>
+    
     <?php echo $__env->make('components.navbar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="container-fluid">
@@ -28,28 +29,59 @@
             <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
+
+                        
                         <li class="nav-item">
                             <a class="nav-link <?php echo e(Route::is('home') ? 'active' : ''); ?>" href="<?php echo e(route('home')); ?>">
                                 <i class="fas fa-home"></i> Dashboard
                             </a>
                         </li>
 
-
-                        <!-- Data Post -->
+                        
+                        
                         <li class="nav-item">
-                            <a class="nav-link <?php echo e(Route::is('posts.*') ? 'active' : ''); ?>" href="<?php echo e(route('posts.index')); ?>">
-                                <i class="fas fa-pen-fancy"></i> Data Post
+                            <a class="nav-link <?php echo e(Route::is('posts.public.index') || Route::is('posts.public.show') ? 'active' : ''); ?>" href="<?php echo e(route('posts.public.index')); ?>">
+                                <i class="fas fa-list-alt"></i> Daftar Post
                             </a>
                         </li>
 
-                        <?php if(Auth::user() && Auth::user()->role == 1): ?>
-                        <!-- Data User -->
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo e(Route::is('users.*') ? 'active' : ''); ?>" href="<?php echo e(route('users.index')); ?>">
-                                <i class="fas fa-users"></i> Data User
-                            </a>
-                        </li>
+                        
+                        
+                        
+
+                        <?php if(auth()->guard()->check()): ?>
+
+                            
+                            <li class="nav-item">
+                                <a class="nav-link <?php echo e(Route::is('profile.*') ? 'active' : ''); ?>" href="<?php echo e(route('profile.show')); ?>">
+                                    <i class="fas fa-user-circle"></i> Profil Saya
+                                </a>
+                            </li>
+
+                            
+                            <?php if(Auth::user()->role == 1): ?>
+
+                                <!-- Data Post (Admin Index - Ada Aksi CRUD) -->
+                                <li class="nav-item">
+                                    <a class="nav-link <?php echo e(Route::is('posts.index') ? 'active' : ''); ?>" href="<?php echo e(route('posts.index')); ?>">
+                                        <i class="fas fa-pen-fancy"></i> Data Post (Admin)
+                                    </a>
+                                </li>
+
+                                <!-- Data User -->
+                                <li class="nav-item">
+                                    <a class="nav-link <?php echo e(Route::is('users.*') ? 'active' : ''); ?>" href="<?php echo e(route('users.index')); ?>">
+                                        <i class="fas fa-users"></i> Data User
+                                    </a>
+                                </li>
+
+                            <?php endif; ?>
+
                         <?php endif; ?>
+
+                        
+                        
+                        
 
                     </ul>
                 </div>

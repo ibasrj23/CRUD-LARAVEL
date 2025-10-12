@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Post;
-// FIX KRITIS 1: Tambahkan dependency Auth, File, dan Log
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -12,182 +11,197 @@ use Illuminate\Support\Facades\Log;
 class PostController extends Controller
 {
     /**
-     * Display a listing of the resource (Index).
+     * Display a listing of the resource (Index)
+     * - Bisa dilihat semua (guest, user, admin)
      */
     public function index(Request $request)
     {
-        // 1. Ambil parameter pencarian dan pengurutan
         $search = $request->get('search');
-        // Pastikan default sorting adalah 'published_at'
         $sort = $request->get('sort', 'published_at');
 
-        // Query dasar
-        $postsQuery = Post::query();
+        $postsQuery = Post::query()->with('user');
 
-        // 2. Logic Pencarian (Menggunakan when() - Lebih Clean untuk Filter Opsional)
+        // Pencarian
         $postsQuery->when($search, function ($query, $search) {
-            return $query->where('title', 'like', '%' . $search . '%')
-                         ->orWhere('content', 'like', '%' . $search . '%');
+            return $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%");
+            });
         });
 
-        // 3. Logic Pengurutan (Menggunakan if/elseif/else - Lebih Aman & Efisien untuk Logika Eksklusif)
-        if ($sort == 'published_at') {
-            $postsQuery->orderBy('published_at', 'desc');
-        } elseif ($sort == 'title') {
-            $postsQuery->orderBy('title', 'asc');
-        } else {
-            // Logika Fallback: Jika parameter sort tidak valid, gunakan latest
-            $postsQuery->latest('published_at');
-        }
+        // Urutan
+        $postsQuery->when($sort === 'title', function ($q) {
+            $q->orderBy('title', 'asc');
+        }, function ($q) {
+            $q->orderBy('published_at', 'desc');
+        });
 
-        // Kasih tampil cuma 5 halaman saja (Simple Paginate)
-        $posts = $postsQuery->simplePaginate(5);
+        // Paginate hasil
+        $posts = $postsQuery->simplePaginate(5)->withQueryString();
 
-        $date = date('Y-m-d');
-
-        // PENTING: Error "Attempt to read property role on null" terjadi di VIEW (posts/index.blade.php).
-        // Pastikan di view, setiap pengecekan Auth::user()->role selalu diawali dengan Auth::check() atau Auth::user() &&
-        // Contoh: @if (Auth::check() && Auth::user()->role == 1)
-
-        return view('posts.index', [
-            'posts' => $posts,
-            'date' => $date,
-            'search' => $search,
-            'sort' => $sort,
-        ]);
+        return view('posts.index', compact('posts', 'search', 'sort'));
     }
 
     /**
      * Show the form for creating a new resource.
+     * - Hanya admin yang bisa membuat post
      */
     public function create()
     {
+        if (!Auth::check() || Auth::user()->role !== 1) {
+            return redirect()->route('posts.index')
+                ->with('error', 'Anda tidak memiliki izin untuk membuat post.');
+        }
+
         return view('posts.create');
     }
 
     /**
      * Store a newly created resource in storage.
+     * - Hanya admin yang bisa menambah post
      */
     public function store(Request $request)
     {
-        //kasih validasi
+        if (!Auth::check() || Auth::user()->role !== 1) {
+            return redirect()->route('posts.index')
+                ->with('error', 'Anda tidak memiliki izin untuk menambah post.');
+        }
+
         $validated = $request->validate([
-            'title' => 'required|max:255',
-            'content' => 'required',
+            'title'        => 'required|max:255',
+            'content'      => 'required',
             'published_at' => 'required|date',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'image'        => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'is_active'    => 'required|boolean',
         ]);
 
-        //simpan gambar di public bukan di storage
         $imageName = null;
+
         if ($request->hasFile('image')) {
             try {
-                // Gunakan time() untuk nama file unik
-                $imageName = time().'_'.$request->image->extension();
-                // Pindahkan ke public/image
-                $request->image->move(public_path('image'), $imageName);
+                $imageName = time() . '_' . $request->file('image')->getClientOriginalName();
+                $request->file('image')->move(public_path('image'), $imageName);
             } catch (\Throwable $e) {
-                // Log error jika gagal upload (misalnya karena permission)
-                Log::error('Post Store Gagal Upload Image:', ['error' => $e->getMessage()]);
-                return back()->withInput()->with('error', 'Gagal mengupload gambar. Cek izin folder public/image.');
+                Log::error('Gagal upload gambar saat membuat post:', [
+                    'error' => $e->getMessage(),
+                ]);
+                return back()->withInput()->with('error', 'Gagal mengupload gambar.');
             }
         }
 
-        // Buat record di database
-        $post = Post::create([
-            'title' => $validated['title'],
-            'content' => $validated['content'],
+        Post::create([
+            'title'        => $validated['title'],
+            'content'      => $validated['content'],
             'published_at' => $validated['published_at'],
-            'image' => $imageName,
-            // FIX KRITIS 2: Ganti auth()->id() menjadi Auth::id()
-            'user_id' => Auth::id() ?? 1,
+            'image'        => $imageName,
+            'is_active'    => $validated['is_active'],
+            'user_id'      => Auth::id(),
         ]);
 
-        return redirect()->route('posts.index')->with('Sukses', 'berhasil dibuat coy!');
-
+        return redirect()->route('posts.index')->with('success', 'Post berhasil dibuat!');
     }
 
     /**
      * Display the specified resource.
+     * - Semua bisa melihat detail post
      */
     public function show(string $id)
     {
-        $post = Post::findOrFail($id);
+        $post = Post::with('user')->findOrFail($id);
         return view('posts.show', compact('post'));
     }
 
     /**
      * Show the form for editing the specified resource.
+     * - Hanya admin yang bisa mengedit
      */
     public function edit(string $id)
     {
+        if (!Auth::check() || Auth::user()->role !== 1) {
+            return redirect()->route('posts.index')
+                ->with('error', 'Anda tidak memiliki izin untuk mengedit post.');
+        }
+
         $post = Post::findOrFail($id);
         return view('posts.edit', compact('post'));
     }
 
     /**
      * Update the specified resource in storage.
+     * - Hanya admin yang bisa update post
      */
     public function update(Request $request, string $id)
     {
+        if (!Auth::check() || Auth::user()->role !== 1) {
+            return redirect()->route('posts.index')
+                ->with('error', 'Anda tidak memiliki izin untuk memperbarui post.');
+        }
+
         $validated = $request->validate([
-            'title' => 'required|max:255',
-            'content' => 'required',
+            'title'        => 'required|max:255',
+            'content'      => 'required',
             'published_at' => 'required|date',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'image'        => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'is_active'    => 'required|boolean',
         ]);
 
         $post = Post::findOrFail($id);
-        $imageName = $post->image; // Pertahankan nama gambar lama
+        $imageName = $post->image;
 
         if ($request->hasFile('image')) {
             try {
-                // Hapus foto lama jika ada
                 if ($post->image && File::exists(public_path('image/' . $post->image))) {
                     File::delete(public_path('image/' . $post->image));
                 }
 
-                // Upload foto baru
-                $imageName = time() . '_' . $request->image->extension();
-                $request->image->move(public_path('image'), $imageName);
-
+                $imageName = time() . '_' . $request->file('image')->getClientOriginalName();
+                $request->file('image')->move(public_path('image'), $imageName);
             } catch (\Throwable $e) {
-                Log::error("Post Update Gagal (File):", ['post_id' => $post->id, 'error' => $e->getMessage()]);
-                return back()->with('error', 'Update Gagal: Masalah saat mengupload gambar. Cek izin folder.');
+                Log::error('Gagal update gambar:', [
+                    'post_id' => $post->id,
+                    'error'   => $e->getMessage(),
+                ]);
+                return back()->with('error', 'Gagal memperbarui gambar.');
             }
         }
 
-        // Lakukan update data
-        $post->title = $validated['title'];
-        $post->content = $validated['content'];
-        $post->published_at = $validated['published_at'];
-        $post->image = $imageName; // Pastikan nama gambar di-update
+        $post->update([
+            'title'        => $validated['title'],
+            'content'      => $validated['content'],
+            'published_at' => $validated['published_at'],
+            'image'        => $imageName,
+            'is_active'    => $validated['is_active'],
+        ]);
 
-        $post->save();
-
-        return redirect()->route('posts.index')->with('Sukses', 'sudah update!');
+        return redirect()->route('posts.index')->with('success', 'Post berhasil diperbarui!');
     }
 
     /**
      * Remove the specified resource from storage.
+     * - Hanya admin yang bisa menghapus
      */
     public function destroy(string $id)
     {
+        if (!Auth::check() || Auth::user()->role !== 1) {
+            return redirect()->route('posts.index')
+                ->with('error', 'Anda tidak memiliki izin untuk menghapus post.');
+        }
+
         $post = Post::findOrFail($id);
 
         try {
-            // Hapus foto dari folder (jika ada)
             if ($post->image && File::exists(public_path('image/' . $post->image))) {
                 File::delete(public_path('image/' . $post->image));
             }
 
             $post->delete();
-
-            return redirect()->route('posts.index')->with('Sukses', 'hilang!');
-
+            return redirect()->route('posts.index')->with('success', 'Post berhasil dihapus!');
         } catch (\Throwable $e) {
-            Log::error("Post Delete Gagal:", ['post_id' => $id, 'error' => $e->getMessage()]);
-            return redirect()->route('posts.index')->with('error', 'Gagal menghapus post. Cek log server.');
+            Log::error('Gagal menghapus post:', [
+                'post_id' => $id,
+                'error'   => $e->getMessage(),
+            ]);
+            return redirect()->route('posts.index')->with('error', 'Terjadi kesalahan saat menghapus post.');
         }
     }
 }

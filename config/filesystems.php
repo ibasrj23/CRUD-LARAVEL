@@ -7,22 +7,20 @@ return [
     | Default Filesystem Disk
     |--------------------------------------------------------------------------
     |
-    | Here you may specify the default filesystem disk that should be used
-    | by the framework. The "local" disk, as well as a variety of cloud
-    | based disks are available to your application for file storage.
+    | Ubah default dari "local" ke "public" agar file bisa diakses dari browser.
+    | Dengan ini, semua upload (termasuk foto profil) otomatis masuk ke disk publik.
     |
     */
 
-    'default' => env('FILESYSTEM_DISK', 'local'),
+    'default' => env('FILESYSTEM_DISK', 'public'),
 
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |
-    | Below you may configure as many filesystem disks as necessary, and you
-    | may even configure multiple disks for the same driver. Examples for
-    | most supported storage drivers are configured here for reference.
+    | Konfigurasi untuk berbagai driver penyimpanan.
+    | Disini sudah tersedia "local", "public", dan "s3".
     |
     | Supported drivers: "local", "ftp", "sftp", "s3"
     |
@@ -30,6 +28,7 @@ return [
 
     'disks' => [
 
+        // Disk lokal, khusus untuk file internal (tidak untuk publik)
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
@@ -38,6 +37,7 @@ return [
             'report' => false,
         ],
 
+        // Disk publik — digunakan untuk file yang bisa diakses lewat browser
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
@@ -47,6 +47,7 @@ return [
             'report' => false,
         ],
 
+        // Disk S3 — contoh untuk cloud storage (AWS)
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
@@ -67,9 +68,9 @@ return [
     | Symbolic Links
     |--------------------------------------------------------------------------
     |
-    | Here you may configure the symbolic links that will be created when the
-    | `storage:link` Artisan command is executed. The array keys should be
-    | the locations of the links and the values should be their targets.
+    | Link simbolik agar folder "public/storage" bisa mengakses "storage/app/public".
+    | Pastikan sudah menjalankan perintah:
+    | php artisan storage:link
     |
     */
 

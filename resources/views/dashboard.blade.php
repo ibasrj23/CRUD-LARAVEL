@@ -9,16 +9,6 @@
     <div class="row">
         <div class="col-md-12">
 
-            {{-- Tombol Aksi di bagian atas (Tombol Tambah Post - Hanya untuk Admin) --}}
-            @if (Auth::user() && Auth::user()->role == 1)
-            <div class="d-flex justify-content-end mb-4">
-                {{-- Asumsi route untuk membuat post baru adalah 'posts.create' --}}
-                <a href="{{ route('posts.create') }}" class="btn btn-success shadow-sm">
-                    <i class="fas fa-plus"></i> Tambah Post Baru
-                </a>
-            </div>
-            @endif
-
             {{-- Bagian Selamat Datang / Ringkasan --}}
             <div class="card bg-primary text-white mb-4 shadow-sm">
                 <div class="card-body">

@@ -21,6 +21,7 @@
 </head>
 
 <body>
+    {{-- Navbar sudah disematkan di sini dan menangani tombol Login/Logout --}}
     @include('components.navbar')
 
     <div class="container-fluid">
@@ -28,28 +29,59 @@
             <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
+
+                        {{-- 1. DASHBOARD (Terlihat oleh SEMUA ORANG: Guest, User, Admin) --}}
                         <li class="nav-item">
                             <a class="nav-link {{ Route::is('home') ? 'active' : '' }}" href="{{ route('home') }}">
                                 <i class="fas fa-home"></i> Dashboard
                             </a>
                         </li>
 
-
-                        <!-- Data Post -->
+                        {{-- 2. DAFTAR POST (Terlihat oleh SEMUA ORANG: Guest, User, Admin) --}}
+                        {{-- Ini adalah menu view publik (posts.public.index) --}}
                         <li class="nav-item">
-                            <a class="nav-link {{ Route::is('posts.*') ? 'active' : '' }}" href="{{ route('posts.index') }}">
-                                <i class="fas fa-pen-fancy"></i> Data Post
+                            <a class="nav-link {{ Route::is('posts.public.index') || Route::is('posts.public.show') ? 'active' : '' }}" href="{{ route('posts.public.index') }}">
+                                <i class="fas fa-list-alt"></i> Daftar Post
                             </a>
                         </li>
 
-                        @if (Auth::user() && Auth::user()->role == 1)
-                        <!-- Data User -->
-                        <li class="nav-item">
-                            <a class="nav-link {{ Route::is('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
-                                <i class="fas fa-users"></i> Data User
-                            </a>
-                        </li>
-                        @endif
+                        {{-- ============================================================= --}}
+                        {{-- START: MENU HANYA JIKA SUDAH LOGIN (Auth) --}}
+                        {{-- ============================================================= --}}
+
+                        @auth
+
+                            {{-- 3. PROFIL SAYA (Terlihat oleh User & Admin) --}}
+                            <li class="nav-item">
+                                <a class="nav-link {{ Route::is('profile.*') ? 'active' : '' }}" href="{{ route('profile.show') }}">
+                                    <i class="fas fa-user-circle"></i> Profil Saya
+                                </a>
+                            </li>
+
+                            {{-- 4. MENU ADMIN (Hanya Role 1) --}}
+                            @if (Auth::user()->role == 1)
+
+                                <!-- Data Post (Admin Index - Ada Aksi CRUD) -->
+                                <li class="nav-item">
+                                    <a class="nav-link {{ Route::is('posts.index') ? 'active' : '' }}" href="{{ route('posts.index') }}">
+                                        <i class="fas fa-pen-fancy"></i> Data Post (Admin)
+                                    </a>
+                                </li>
+
+                                <!-- Data User -->
+                                <li class="nav-item">
+                                    <a class="nav-link {{ Route::is('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
+                                        <i class="fas fa-users"></i> Data User
+                                    </a>
+                                </li>
+
+                            @endif
+
+                        @endauth
+
+                        {{-- ============================================================= --}}
+                        {{-- END: MENU AUTHENTICATED --}}
+                        {{-- ============================================================= --}}
 
                     </ul>
                 </div>

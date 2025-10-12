@@ -24,14 +24,6 @@
         </div>
     @endif
 
-    <!-- Tombol Tambah Post (Hanya terlihat oleh Admin/Role 1) -->
-    {{-- FIX 1: Periksa Auth::check() dulu sebelum akses role --}}
-    @if (Auth::check() && Auth::user()->role == 1)
-        <a href="{{ route('posts.create') }}" class="btn btn-primary mb-4">
-            <i class="fas fa-plus mr-2"></i> Tambah Post Baru
-        </a>
-    @endif
-
     <!-- Form Pencarian dan Sorting -->
     <div class="mb-4 p-3 bg-light rounded-lg shadow-sm d-flex justify-content-between align-items-center">
         <form action="{{ route('posts.index') }}" method="GET" class="d-flex w-50">

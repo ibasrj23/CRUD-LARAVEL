@@ -1,22 +1,36 @@
+<header class="navbar navbar-dark bg-dark fixed-top shadow-sm px-3 py-2">
+    <div class="container-fluid d-flex align-items-center justify-content-between">
 
-<header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
-	<a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">Company name</a>
-	<button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse"
-		data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false"
-		aria-label="Toggle navigation">
-		<span class="navbar-toggler-icon"></span>
-	</button>
+        {{-- Logo / Nama Brand --}}
+        <a class="navbar-brand fw-bold fs-5" href="{{ route('home') }}">
+            <i class="bi bi-building me-2"></i>Company Name
+        </a>
 
-	<div class="navbar-nav">
-		<div class="nav-item text-nowrap">
-			{{-- <a class="nav-link px-3" href="#">Sign out</a> --}}
-			<form method="POST" action="{{ route('logout') }}">
-				@csrf
-				<a class="nav-link px-3" href="#"
-					onclick="event.preventDefault();
-								this.closest('form').submit();">Sign Out
-				</a>
-			</form>
-		</div>
-	</div>
+        {{-- Tombol Sidebar untuk Mobile --}}
+        <button class="navbar-toggler d-md-none border-0" type="button" data-bs-toggle="collapse"
+            data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false"
+            aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        {{-- Bagian Kanan (Login / Logout) --}}
+        <div class="d-flex align-items-center">
+
+            @guest
+                <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm px-3">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Login
+                </a>
+            @endguest
+
+            @auth
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="m-0">
+                    @csrf
+                    <button type="submit" class="btn btn-danger btn-sm px-3 d-flex align-items-center">
+                        <i class="bi bi-box-arrow-right me-1"></i> Sign Out
+                    </button>
+                </form>
+            @endauth
+
+        </div>
+    </div>
 </header>
